@@ -585,7 +585,7 @@
     <button class="modal-close" onclick="closeModal('signupModal')">&times;</button>
     <h3>Join the waitlist</h3>
     <p>OpenShelf is launching soon. Be the first to publish your book when we open the doors.</p>
-    <form class="modal-form" onsubmit="handleSignup(event,'signupModal')">
+    <form class="modal-form" name="waitlist" netlify onsubmit="handleSignup(event,'signupModal')">
       <input type="text" placeholder="Your name" required />
       <input type="email" placeholder="Email address" required />
       <select>
@@ -606,7 +606,7 @@
     <button class="modal-close" onclick="closeModal('authorModal')">&times;</button>
     <h3>Publish your book</h3>
     <p>Tell us about yourself and your book. We'll reach out with next steps when we launch.</p>
-    <form class="modal-form" onsubmit="handleSignup(event,'authorModal')">
+    <form class="modal-form" name="author-signup" netlify onsubmit="handleSignup(event,'authorModal')">
       <input type="text" placeholder="Your name" required />
       <input type="email" placeholder="Email address" required />
       <input type="text" placeholder="Book title (if you have one)" />
@@ -640,7 +640,7 @@
     <button class="modal-close" onclick="closeModal('contactModal')">&times;</button>
     <h3>Get in touch</h3>
     <p>Questions, feedback, or partnership inquiries — we'd love to hear from you.</p>
-    <form class="modal-form" onsubmit="handleSignup(event,'contactModal')">
+    <form class="modal-form" name="contact" netlify onsubmit="handleSignup(event,'contactModal")">
       <input type="text" placeholder="Your name" required />
       <input type="email" placeholder="Email address" required />
       <select>
@@ -891,7 +891,7 @@
   <div class="capture-inner">
     <h2>Be the first to know when we launch.</h2>
     <p>Join hundreds of authors already on the waitlist. We'll send one email when the doors open — no spam, ever.</p>
-    <form class="capture-form" onsubmit="handleCapture(event)">
+    <form class="capture-form" name="email-capture" netlify onsubmit="handleCapture(event)">
       <input type="email" id="captureEmail" placeholder="Your email address" required />
       <button type="submit" class="btn-primary">Notify Me</button>
     </form>
