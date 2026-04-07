@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenShelf — Publish. Share. Your Terms.</title>
+  <meta name="description" content="OpenShelf is the simplest way for authors to publish, sell, or share their books. Upload a PDF, add a cover, go live in minutes." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0c0f1a;
+      --surface:      #131729;
+      --surface-2:    #1c2035;
+      --border:       rgba(255,255,255,0.09);
+      --border-hi:    rgba(255,255,255,0.18);
+      --text:         #f2f0ec;
+      --text-muted:   #9a96a0;
+      --text-faint:   #52505a;
+      --gold:         #e2b96a;
+      --gold-bright:  #f0cc88;
+      --gold-dim:     rgba(226,185,106,0.14);
+      --green:        #5bb882;
+      --green-dim:    rgba(91,184,130,0.12);
+      --blue:         #5b9cf0;
+      --blue-dim:     rgba(91,156,240,0.12);
+      --serif:        'Playfair Display', Georgia, serif;
+      --sans:         'Instrument Sans', system-ui, sans-serif;
+      --radius:       10px;
+      --radius-lg:    16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── MODAL OVERLAY ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 900;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      width: 90%; max-width: 460px;
+      position: relative;
+      animation: modalIn 0.25s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity:0; transform: translateY(16px) scale(0.97); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-close {
+      position: absolute; top: 1rem; right: 1.25rem;
+      background: none; border: none; color: var(--text-muted);
+      font-size: 1.4rem; cursor: pointer; line-height: 1;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal h3 {
+      font-family: var(--serif); font-size: 1.5rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.4rem;
+    }
+    .modal p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6; }
+
+    .modal-form { display: flex; flex-direction: column; gap: 0.85rem; }
+
+    .modal-form input,
+    .modal-form select,
+    .modal-form textarea {
+      background: var(--surface-2); border: 1px solid var(--border-hi);
+      border-radius: var(--radius); padding: 0.75rem 1rem;
+      color: var(--text); font-family: var(--sans); font-size: 0.9rem;
+      width: 100%; outline: none; transition: border-color 0.2s;
+    }
+    .modal-form input:focus,
+    .modal-form select:focus,
+    .modal-form textarea:focus { border-color: var(--gold); }
+    .modal-form textarea { min-height: 100px; resize: vertical; }
+    .modal-form select option { background: var(--surface-2); }
+
+    .modal-form input::placeholder,
+    .modal-form textarea::placeholder { color: var(--text-faint); }
+
+    .btn-primary {
+      background: var(--gold); color: #0c0f1a;
+      border: none; border-radius: var(--radius);
+      padding: 0.8rem 1.5rem; font-family: var(--sans);
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      text-align: center;
+    }
+    .btn-primary:hover { background: var(--gold-bright); transform: translateY(-1px); }
+
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border-hi); border-radius: var(--radius);
+      padding: 0.75rem 1.5rem; font-family: var(--sans);
+      font-size: 0.9rem; font-weight: 500; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      text-decoration: none; display: inline-block; text-align: center;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+    .success-msg {
+      display: none; text-align: center; padding: 1rem;
+      color: var(--green); font-size: 0.9rem; font-weight: 500;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2.5rem;
+      backdrop-filter: blur(24px) saturate(1.5);
+      -webkit-backdrop-filter: blur(24px) saturate(1.5);
+      background: rgba(12,15,26,0.82);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: var(--serif); font-size: 1.2rem; font-weight: 600;
+      color: var(--text); text-decoration: none; letter-spacing: 0.01em;
+      flex-shrink: 0;
+    }
+    .logo em { font-style: normal; color: var(--gold); }
+
+    .nav-links {
+      display: flex; align-items: center; gap: 0.25rem;
+    }
+
+    .nav-links a {
+      font-size: 0.82rem; font-weight: 500; color: var(--text-muted);
+      text-decoration: none; padding: 0.4rem 0.85rem;
+      border-radius: 6px; transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--surface-2); }
+
+    .nav-actions { display: flex; align-items: center; gap: 0.6rem; }
+
+    .nav-btn {
+      font-size: 0.82rem; font-weight: 500; padding: 0.4rem 1rem;
+      border-radius: 6px; cursor: pointer; border: none;
+      font-family: var(--sans); transition: all 0.2s; text-decoration: none;
+    }
+    .nav-btn.ghost {
+      background: none; color: var(--text-muted); border: 1px solid var(--border);
+    }
+    .nav-btn.ghost:hover { color: var(--text); border-color: var(--border-hi); }
+    .nav-btn.solid {
+      background: var(--gold); color: #0c0f1a; font-weight: 600;
+    }
+    .nav-btn.solid:hover { background: var(--gold-bright); }
+
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px;
+    }
+    .hamburger span {
+      display: block; width: 22px; height: 2px;
+      background: var(--text); border-radius: 2px; transition: all 0.2s;
+    }
+
+    /* ── MOBILE NAV ── */
+    .mobile-menu {
+      display: none; position: fixed;
+      top: 57px; left: 0; right: 0; z-index: 490;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem 1.5rem;
+      flex-direction: column; gap: 0.5rem;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-size: 0.9rem; color: var(--text-muted); text-decoration: none;
+      padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+    }
+    .mobile-menu a:last-child { border-bottom: none; }
+    .mobile-menu .mob-actions { display: flex; gap: 0.6rem; margin-top: 0.5rem; }
+    .mobile-menu .mob-actions button,
+    .mobile-menu .mob-actions a {
+      flex: 1; text-align: center; padding: 0.65rem;
+      border-radius: var(--radius); font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; font-family: var(--sans); border: none;
+      text-decoration: none;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 7rem 2.5rem 4rem;
+      position: relative; overflow: hidden;
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center; gap: 3rem;
+      max-width: 1100px; margin: 0 auto;
+      min-height: 85vh;
+    }
+
+    .hero-glow {
+      position: absolute; top: 0; left: 30%;
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse, rgba(226,185,106,0.07) 0%, transparent 65%);
+      pointer-events: none; transform: translateX(-50%);
+    }
+
+    .hero-left { position: relative; z-index: 1; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--gold-dim); border: 1px solid rgba(226,185,106,0.25);
+      border-radius: 100px; padding: 0.3rem 0.85rem;
+      margin-bottom: 1.5rem;
+      opacity: 0; animation: fadeUp 0.6s ease 0.1s forwards;
+    }
+    .hero-badge span { font-size: 0.72rem; font-weight: 600; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; }
+    .hero-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.8rem, 5vw, 4.25rem);
+      font-weight: 700; line-height: 1.05;
+      letter-spacing: -0.025em; color: var(--text);
+      margin-bottom: 1.25rem;
+      opacity: 0; animation: fadeUp 0.7s ease 0.2s forwards;
+    }
+    .hero h1 em { font-style: italic; color: var(--gold); }
+
+    .hero-sub {
+      font-size: 1rem; color: var(--text-muted); max-width: 440px;
+      line-height: 1.75; font-weight: 300; margin-bottom: 2rem;
+      opacity: 0; animation: fadeUp 0.7s ease 0.35s forwards;
+    }
+
+    .hero-actions {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.7s ease 0.45s forwards;
+    }
+
+    /* hero right — visual book stack */
+    .hero-right {
+      position: relative; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; animation: fadeUp 0.8s ease 0.3s forwards;
+    }
+
+    .book-stack {
+      position: relative; width: 280px; height: 320px;
+    }
+
+    .book-card {
+      position: absolute; border-radius: 10px;
+      border: 1px solid var(--border-hi);
+      display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 1rem;
+      overflow: hidden;
+    }
+
+    .book-card:nth-child(1) {
+      width: 190px; height: 260px;
+      background: linear-gradient(135deg, #1e2a4a 0%, #0d1829 100%);
+      top: 0; left: 50%; transform: translateX(-50%) rotate(-6deg);
+      z-index: 1;
+    }
+    .book-card:nth-child(2) {
+      width: 190px; height: 260px;
+      background: linear-gradient(135deg, #1a3a2a 0%, #0d2018 100%);
+      top: 15px; left: 50%; transform: translateX(-30%) rotate(3deg);
+      z-index: 2;
+    }
+    .book-card:nth-child(3) {
+      width: 190px; height: 260px;
+      background: linear-gradient(135deg, #2a1e3a 0%, #180d29 100%);
+      top: 30px; left: 50%; transform: translateX(-70%) rotate(-2deg);
+      z-index: 0;
+    }
+
+    .book-card-title {
+      font-family: var(--serif); font-size: 0.85rem; font-weight: 600;
+      color: var(--text); line-height: 1.3; margin-bottom: 0.25rem;
+    }
+    .book-card-author { font-size: 0.7rem; color: var(--text-muted); }
+    .book-card-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
+      padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: uppercase;
+    }
+    .book-card-badge.paid { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(226,185,106,0.3); }
+    .book-card-badge.free { background: var(--green-dim); color: var(--green); border: 1px solid rgba(91,184,130,0.3); }
+    .book-lines { display: flex; flex-direction: column; gap: 4px; margin-bottom: 0.75rem; }
+    .book-line { height: 2px; background: rgba(255,255,255,0.08); border-radius: 2px; }
+    .book-line:nth-child(1) { width: 85%; }
+    .book-line:nth-child(2) { width: 70%; }
+    .book-line:nth-child(3) { width: 55%; }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(18px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      max-width: 800px; margin: 0 auto;
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      overflow: hidden; background: var(--surface);
+    }
+    .stat-item {
+      padding: 1.5rem 2rem; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num {
+      font-family: var(--serif); font-size: 2rem; font-weight: 700;
+      color: var(--gold); display: block; line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .stat-label { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── SECTIONS ── */
+    .section {
+      max-width: 980px; margin: 0 auto; padding: 5rem 2.5rem;
+    }
+    .section.narrow { max-width: 720px; }
+    .section-center { text-align: center; }
+
+    .eyebrow-tag {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.68rem; font-weight: 600; color: var(--gold);
+      letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .eyebrow-tag::before {
+      content:''; display: block; width: 16px; height: 1px;
+      background: var(--gold); opacity: 0.6;
+    }
+
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(1.7rem, 2.8vw, 2.4rem);
+      font-weight: 600; line-height: 1.2;
+      letter-spacing: -0.02em; color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      font-size: 0.95rem; color: var(--text-muted);
+      max-width: 520px; line-height: 1.75; font-weight: 300;
+      margin-bottom: 3rem;
+    }
+    .section-center .section-sub { margin-left: auto; margin-right: auto; }
+
+    /* divider */
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* ── STEPS ── */
+    .steps { display: flex; flex-direction: column; }
+    .step {
+      display: grid; grid-template-columns: 56px 1fr;
+      gap: 1.5rem; padding: 1.75rem 0;
+      border-top: 1px solid var(--border); transition: border-color 0.2s;
+    }
+    .step:last-child { border-bottom: 1px solid var(--border); }
+    .step:hover { border-top-color: var(--border-hi); }
+    .step-num {
+      font-family: var(--serif); font-size: 1.8rem; font-weight: 400;
+      color: var(--text-faint); line-height: 1; font-style: italic;
+      padding-top: 0.15rem;
+    }
+    .step-body h3 {
+      font-family: var(--serif); font-size: 1.1rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.4rem;
+    }
+    .step-body p {
+      font-size: 0.88rem; color: var(--text-muted);
+      line-height: 1.75; font-weight: 300;
+    }
+
+    /* ── PATHS ── */
+    .paths-wrap { max-width: 980px; margin: 0 auto; padding: 0 2.5rem 5rem; }
+    .paths-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .path-card {
+      background: var(--surface); padding: 2rem;
+      position: relative; transition: background 0.2s;
+    }
+    .path-card:hover { background: var(--surface-2); }
+    .path-card::before {
+      content:''; position: absolute; top:0; left:0; right:0; height: 2px;
+    }
+    .path-card.sell::before  { background: linear-gradient(90deg,var(--gold) 60%,transparent); }
+    .path-card.share::before { background: linear-gradient(90deg,var(--green) 60%,transparent); }
+    .path-card.free::before  { background: linear-gradient(90deg,var(--blue) 60%,transparent); }
+    .path-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.95rem; margin-bottom: 1.25rem;
+    }
+    .path-card.sell  .path-icon { background: var(--gold-dim); }
+    .path-card.share .path-icon { background: var(--green-dim); }
+    .path-card.free  .path-icon { background: var(--blue-dim); }
+    .path-card h3 {
+      font-family: var(--serif); font-size: 1.1rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.5rem;
+    }
+    .path-card .path-tag {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 0.18rem 0.5rem;
+      border-radius: 4px; display: inline-block; margin-bottom: 1rem;
+    }
+    .path-card.sell  .path-tag { background: var(--gold-dim);  color: var(--gold);  }
+    .path-card.share .path-tag { background: var(--green-dim); color: var(--green); }
+    .path-card.free  .path-tag { background: var(--blue-dim);  color: var(--blue);  }
+    .path-card ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .path-card ul li {
+      font-size: 0.83rem; color: var(--text-muted); font-weight: 300;
+      display: flex; align-items: baseline; gap: 0.65rem; line-height: 1.5;
+    }
+    .path-card.sell  ul li::before { content:''; width:3px; height:3px; border-radius:50%; background:var(--gold);  flex-shrink:0; margin-top:.45em; }
+    .path-card.share ul li::before { content:''; width:3px; height:3px; border-radius:50%; background:var(--green); flex-shrink:0; margin-top:.45em; }
+    .path-card.free  ul li::before { content:''; width:3px; height:3px; border-radius:50%; background:var(--blue);  flex-shrink:0; margin-top:.45em; }
+
+    /* ── ABOUT ── */
+    .about-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;
+    }
+    .about-visual {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 2rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .about-feature {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1rem; border-radius: var(--radius);
+      background: var(--surface-2); border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .about-feature:hover { border-color: var(--border-hi); }
+    .about-feature-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; flex-shrink: 0; background: var(--gold-dim);
+    }
+    .about-feature h4 {
+      font-size: 0.85rem; font-weight: 600; color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+    .about-feature p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── EMAIL CAPTURE ── */
+    .capture-band {
+      background: var(--surface);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 4rem 2.5rem; text-align: center;
+    }
+    .capture-inner { max-width: 540px; margin: 0 auto; }
+    .capture-inner h2 {
+      font-family: var(--serif); font-size: clamp(1.6rem,2.8vw,2.1rem);
+      font-weight: 600; letter-spacing: -0.02em; color: var(--text);
+      margin-bottom: 0.6rem;
+    }
+    .capture-inner p {
+      font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.75rem; line-height: 1.7;
+    }
+    .capture-form {
+      display: flex; gap: 0.6rem; max-width: 420px; margin: 0 auto;
+    }
+    .capture-form input {
+      flex: 1; background: var(--surface-2);
+      border: 1px solid var(--border-hi); border-radius: var(--radius);
+      padding: 0.75rem 1rem; color: var(--text);
+      font-family: var(--sans); font-size: 0.88rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .capture-form input:focus { border-color: var(--gold); }
+    .capture-form input::placeholder { color: var(--text-faint); }
+    .capture-note { font-size: 0.72rem; color: var(--text-faint); margin-top: 0.75rem; }
+
+    /* ── MANIFESTO ── */
+    .manifesto {
+      padding: 5rem 2.5rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .manifesto::before {
+      content:''; position: absolute; top:50%; left:50%;
+      transform: translate(-50%,-50%);
+      width:600px; height:400px;
+      background: radial-gradient(ellipse, rgba(226,185,106,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .manifesto-inner { max-width: 600px; margin: 0 auto; position: relative; }
+    .manifesto h2 {
+      font-family: var(--serif);
+      font-size: clamp(1.8rem,3.5vw,2.75rem);
+      font-weight: 600; line-height: 1.2;
+      letter-spacing: -0.02em; color: var(--text); margin-bottom: 1.25rem;
+    }
+    .manifesto h2 em { font-style: italic; color: var(--gold); }
+    .manifesto p {
+      font-size: 0.95rem; color: var(--text-muted); line-height: 1.8;
+      font-weight: 300; margin-bottom: 2rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2.5rem 1.5rem;
+      max-width: 980px; margin: 0 auto;
+    }
+    .footer-top {
+      display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 2rem; margin-bottom: 2.5rem;
+    }
+    .footer-brand .logo { display: block; margin-bottom: 0.75rem; font-size: 1.1rem; }
+    .footer-brand p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.65; max-width: 200px; }
+    .footer-col h4 {
+      font-size: 0.72rem; font-weight: 700; color: var(--text-faint);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.85rem;
+    }
+    .footer-col a {
+      display: block; font-size: 0.82rem; color: var(--text-muted);
+      text-decoration: none; margin-bottom: 0.5rem; transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom {
+      border-top: 1px solid var(--border); padding-top: 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.75rem; color: var(--text-faint);
+    }
+    .footer-bottom a { color: var(--text-faint); text-decoration: none; }
+    .footer-bottom a:hover { color: var(--text-muted); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 860px) {
+      .nav-links { display: none; }
+      .nav-actions { display: none; }
+      .hamburger { display: flex; }
+      .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 6rem; }
+      .hero-right { display: none; }
+      .paths-grid { grid-template-columns: 1fr; }
+      .about-grid { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+      .stats-bar { grid-template-columns: 1fr; }
+      .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .stat-item:last-child { border-bottom: none; }
+    }
+
+    @media (max-width: 560px) {
+      nav { padding: 1rem 1.25rem; }
+      .section, .paths-wrap { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .footer-top { grid-template-columns: 1fr; }
+      .capture-form { flex-direction: column; }
+      .footer-bottom { flex-direction: column; gap: 0.5rem; text-align: center; }
+      footer { padding-left: 1.25rem; padding-right: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIGNUP MODAL ══ -->
+<div class="modal-overlay" id="signupModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('signupModal')">&times;</button>
+    <h3>Join the waitlist</h3>
+    <p>OpenShelf is launching soon. Be the first to publish your book when we open the doors.</p>
+    <form class="modal-form" onsubmit="handleSignup(event,'signupModal')">
+      <input type="text" placeholder="Your name" required />
+      <input type="email" placeholder="Email address" required />
+      <select>
+        <option value="" disabled selected>I am a...</option>
+        <option value="author">Writer / Author</option>
+        <option value="reader">Reader</option>
+        <option value="both">Both</option>
+      </select>
+      <button type="submit" class="btn-primary">Get Early Access</button>
+    </form>
+    <div class="success-msg" id="signupSuccess">✓ You're on the list — we'll be in touch soon!</div>
+  </div>
+</div>
+
+<!-- ══ AUTHOR SIGNUP MODAL ══ -->
+<div class="modal-overlay" id="authorModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('authorModal')">&times;</button>
+    <h3>Publish your book</h3>
+    <p>Tell us about yourself and your book. We'll reach out with next steps when we launch.</p>
+    <form class="modal-form" onsubmit="handleSignup(event,'authorModal')">
+      <input type="text" placeholder="Your name" required />
+      <input type="email" placeholder="Email address" required />
+      <input type="text" placeholder="Book title (if you have one)" />
+      <select>
+        <option value="" disabled selected>Genre</option>
+        <option>Fiction</option>
+        <option>Non-Fiction</option>
+        <option>Poetry</option>
+        <option>Memoir</option>
+        <option>Mystery / Thriller</option>
+        <option>Sci-Fi / Fantasy</option>
+        <option>Romance</option>
+        <option>Self-Help</option>
+        <option>Other</option>
+      </select>
+      <select>
+        <option value="" disabled selected>I want to...</option>
+        <option>Sell my book</option>
+        <option>Share it free</option>
+        <option>Not sure yet</option>
+      </select>
+      <button type="submit" class="btn-primary">Reserve My Spot</button>
+    </form>
+    <div class="success-msg" id="authorSuccess">✓ Saved! We'll reach out as soon as we're ready.</div>
+  </div>
+</div>
+
+<!-- ══ CONTACT MODAL ══ -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('contactModal')">&times;</button>
+    <h3>Get in touch</h3>
+    <p>Questions, feedback, or partnership inquiries — we'd love to hear from you.</p>
+    <form class="modal-form" onsubmit="handleSignup(event,'contactModal')">
+      <input type="text" placeholder="Your name" required />
+      <input type="email" placeholder="Email address" required />
+      <select>
+        <option value="" disabled selected>Topic</option>
+        <option>Publishing a book</option>
+        <option>Partnership / Business</option>
+        <option>Press inquiry</option>
+        <option>General question</option>
+        <option>Other</option>
+      </select>
+      <textarea placeholder="Your message..."></textarea>
+      <button type="submit" class="btn-primary">Send Message</button>
+    </form>
+    <div class="success-msg" id="contactSuccess">✓ Message received — we'll reply within 24 hours.</div>
+  </div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <a href="#" class="logo">Open<em>Shelf</em></a>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#publish">Publish</a>
+    <a href="#about">About</a>
+    <a href="#" onclick="openModal('contactModal');return false;">Contact</a>
+  </div>
+  <div class="nav-actions">
+    <button class="nav-btn ghost" onclick="openModal('signupModal')">Sign In</button>
+    <button class="nav-btn solid" onclick="openModal('authorModal')">Publish Free</button>
+  </div>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#how" onclick="toggleMenu()">How It Works</a>
+  <a href="#publish" onclick="toggleMenu()">Publish</a>
+  <a href="#about" onclick="toggleMenu()">About</a>
+  <a href="#" onclick="openModal('contactModal');toggleMenu();return false;">Contact</a>
+  <div class="mob-actions">
+    <button class="btn-outline" onclick="openModal('signupModal');toggleMenu()">Sign In</button>
+    <button class="btn-primary" onclick="openModal('authorModal');toggleMenu()">Publish Free</button>
+  </div>
+</div>
+
+<!-- ══ HERO ══ -->
+<div style="max-width:1100px;margin:0 auto;">
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        <span>Now accepting founding authors</span>
+      </div>
+      <h1>Publish your book.<br/><em>Your way.</em></h1>
+      <p class="hero-sub">Upload a PDF and a cover. That's it. No formatting nightmares, no gatekeepers, no ISBN required. Go from manuscript to live in minutes.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="openModal('authorModal')">Start Publishing — It's Free</button>
+        <a href="#how" class="btn-outline">See how it works</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="book-stack">
+        <div class="book-card">
+          <span class="book-card-badge free">Free</span>
+          <div class="book-lines">
+            <div class="book-line"></div>
+            <div class="book-line"></div>
+            <div class="book-line"></div>
+          </div>
+          <div class="book-card-title">The Quiet Between Stars</div>
+          <div class="book-card-author">Maya Osei</div>
+        </div>
+        <div class="book-card">
+          <span class="book-card-badge paid">$9.00</span>
+          <div class="book-lines">
+            <div class="book-line"></div>
+            <div class="book-line"></div>
+            <div class="book-line"></div>
+          </div>
+          <div class="book-card-title">Letters From the Shore</div>
+          <div class="book-card-author">Daniel Reyes</div>
+        </div>
+        <div class="book-card">
+          <span class="book-card-badge free">Free</span>
+          <div class="book-lines">
+            <div class="book-line"></div>
+            <div class="book-line"></div>
+            <div class="book-line"></div>
+          </div>
+          <div class="book-card-title">Echoes in Amber</div>
+          <div class="book-card-author">Priya Nair</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+<!-- ══ STATS ══ -->
+<div class="section" style="padding-top:4rem;padding-bottom:4rem;">
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-num">$1.85B</span>
+      <span class="stat-label">Self-publishing market in 2024</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">2.6M+</span>
+      <span class="stat-label">Books self-published in 2023</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">10%</span>
+      <span class="stat-label">Our fee — one of the lowest anywhere</span>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ══ HOW IT WORKS ══ -->
+<div class="section" id="how">
+  <span class="eyebrow-tag">How it works</span>
+  <h2 class="section-title">Three steps. No ISBN required.<br/>No formatting headaches.</h2>
+  <p class="section-sub">If you can attach a file to an email, you can publish on OpenShelf.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <h3>Upload your book</h3>
+        <p>Drop in your PDF and a cover image. Add a title, a short description, and pick your genre. That's the entire process. No formatting tools, no technical specifications, no approval queue.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <h3>Set your terms</h3>
+        <p>One decision: sell it or share it free. Set your own price, change it anytime, or offer it at no cost. OpenShelf never locks you in or takes your rights.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <h3>Readers find you</h3>
+        <p>Your book appears on genre pages, curated shelves, and search results. Readers browse paid and free titles side by side — discovering voices the big platforms would never surface.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ══ THREE PATHS ══ -->
+<div id="publish">
+  <div class="paths-wrap" style="padding-top:5rem;">
+    <span class="eyebrow-tag">Three ways to publish</span>
+    <h2 class="section-title">Whether you write to earn,<br/>to be read, or just to exist — we have a place for you.</h2>
+    <div style="height:1.5rem"></div>
+    <div class="paths-grid">
+      <div class="path-card sell">
+        <div class="path-icon">📕</div>
+        <span class="path-tag">Paid</span>
+        <h3>Sell your book</h3>
+        <ul>
+          <li>Set your own price, keep 90%</li>
+          <li>Author storefront with your full catalog</li>
+          <li>No exclusivity — sell anywhere else too</li>
+          <li>Readers pay, you get paid. Simple.</li>
+        </ul>
+      </div>
+      <div class="path-card share">
+        <div class="path-icon">📗</div>
+        <span class="path-tag">Free</span>
+        <h3>Share for free</h3>
+        <ul>
+          <li>Get in front of readers instantly</li>
+          <li>Build an audience without a price barrier</li>
+          <li>Switch to paid anytime</li>
+          <li>Write for the love of it.</li>
+        </ul>
+      </div>
+      <div class="path-card free">
+        <div class="path-icon">📘</div>
+        <span class="path-tag">Free Forever</span>
+        <h3>Single-work tier</h3>
+        <ul>
+          <li>One book, always free to publish</li>
+          <li>Permanent listing — no expiration</li>
+          <li>Perfect for first-time authors</li>
+          <li>No account upgrade required.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ══ ABOUT ══ -->
+<div class="section" id="about">
+  <div class="about-grid">
+    <div>
+      <span class="eyebrow-tag">About OpenShelf</span>
+      <h2 class="section-title">Built for writers.<br/>Not for gatekeepers.</h2>
+      <p class="section-sub" style="margin-bottom:1.5rem;">Publishing your work shouldn't require a technical degree. We built OpenShelf because the existing platforms are either too complex, too expensive, or take too much. There's a better way.</p>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.8;font-weight:300;">OpenShelf is an independent marketplace giving every writer — from first-timers sharing a poem to seasoned authors building a catalog — the same simple tools to reach readers on their own terms. No ISBN. No formatting software. No waiting weeks for approval.</p>
+      <div style="margin-top:1.75rem;">
+        <button class="btn-primary" onclick="openModal('contactModal')">Get in Touch</button>
+      </div>
+    </div>
+    <div class="about-visual">
+      <div class="about-feature">
+        <div class="about-feature-icon">⚡</div>
+        <div>
+          <h4>Live in minutes</h4>
+          <p>Upload, describe, publish. The entire process takes under 10 minutes for most authors.</p>
+        </div>
+      </div>
+      <div class="about-feature">
+        <div class="about-feature-icon">💰</div>
+        <div>
+          <h4>10% flat fee — nothing hidden</h4>
+          <p>We take 10% on paid sales only. Free books cost nothing. Ever. No monthly fees.</p>
+        </div>
+      </div>
+      <div class="about-feature">
+        <div class="about-feature-icon">🔓</div>
+        <div>
+          <h4>You own your work</h4>
+          <p>Your rights, your files, your readers. OpenShelf is a platform, not a publisher.</p>
+        </div>
+      </div>
+      <div class="about-feature">
+        <div class="about-feature-icon">📖</div>
+        <div>
+          <h4>PDF-first, always</h4>
+          <p>No conversion tools. No formatting checkers. If you have a PDF, you're ready to publish.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ══ EMAIL CAPTURE ══ -->
+<div class="capture-band">
+  <div class="capture-inner">
+    <h2>Be the first to know when we launch.</h2>
+    <p>Join hundreds of authors already on the waitlist. We'll send one email when the doors open — no spam, ever.</p>
+    <form class="capture-form" onsubmit="handleCapture(event)">
+      <input type="email" id="captureEmail" placeholder="Your email address" required />
+      <button type="submit" class="btn-primary">Notify Me</button>
+    </form>
+    <div id="captureSuccess" class="success-msg" style="display:none;">✓ You're on the list!</div>
+    <p class="capture-note">No credit card. No commitment. Unsubscribe anytime.</p>
+  </div>
+</div>
+
+<!-- ══ MANIFESTO ══ -->
+<div class="manifesto">
+  <div class="manifesto-inner">
+    <h2>Writers deserve a shelf<br/>that works <em>for them.</em></h2>
+    <p>Not every book needs a price tag. Not every writer wants to give their work away. OpenShelf is the marketplace that finally lets you choose — and keeps choosing, for as long as you write.</p>
+    <button class="btn-primary" onclick="openModal('authorModal')">Claim Your Spot as a Founding Author</button>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<div style="border-top:1px solid var(--border);">
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="logo">Open<em style="font-style:normal;color:var(--gold);">Shelf</em></a>
+        <p>The simplest way to publish, sell, or share your book. PDF-first. Author-first. Always.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <a href="#how">How It Works</a>
+        <a href="#publish">Publishing Options</a>
+        <a href="#" onclick="openModal('authorModal');return false;">Start Publishing</a>
+        <a href="#" onclick="openModal('signupModal');return false;">Sign In</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#about">About Us</a>
+        <a href="#" onclick="openModal('contactModal');return false;">Contact</a>
+        <a href="#" onclick="openModal('contactModal');return false;">Press</a>
+        <a href="#" onclick="openModal('contactModal');return false;">Partnerships</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#">Terms of Service</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Author Agreement</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 OpenShelf. All rights reserved.</span>
+      <span>Made for writers, by writers.</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // Modal controls
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  // Close on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target === el) closeModal(el.id);
+    });
+  });
+  // Close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.active').forEach(el => closeModal(el.id));
+    }
+  });
+
+  // Form submissions — show success state
+  function handleSignup(e, modalId) {
+    e.preventDefault();
+    const form = e.target;
+    const successId = modalId.replace('Modal','Success');
+    form.style.display = 'none';
+    document.getElementById(successId).style.display = 'block';
+    setTimeout(() => closeModal(modalId), 2500);
+    setTimeout(() => {
+      form.style.display = 'flex';
+      document.getElementById(successId).style.display = 'none';
+      form.reset();
+    }, 3000);
+  }
+
+  // Email capture bar
+  function handleCapture(e) {
+    e.preventDefault();
+    document.querySelector('.capture-form').style.display = 'none';
+    document.getElementById('captureSuccess').style.display = 'block';
+  }
+
+  // Mobile menu
+  function toggleMenu() {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  }
+
+  // Smooth scroll for nav links with offset
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const href = a.getAttribute('href');
+      if (href === '#' || href.startsWith('#') === false) return;
+      const target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        const offset = 70;
+        const top = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
